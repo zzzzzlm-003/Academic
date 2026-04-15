@@ -77,6 +77,40 @@ def quantize_0_to_9(gray_0_255: np.ndarray) -> np.ndarray:
     return np.clip(q, 0, 9)
 
 
+def adjust_gray(
+    gray_0_255: np.ndarray,
+    *,
+    auto_contrast: bool,
+    p_low: float,
+    p_high: float,
+    gamma: float,
+) -> np.ndarray:
+    """Brightness/contrast normalization on grayscale array in 0..255.
+
+    - auto_contrast: stretch intensity range using percentiles
+    - gamma: apply gamma correction on [0,1] (gamma < 1 brightens)
+    """
+    g = gray_0_255.astype(np.float32)
+    g = np.clip(g, 0.0, 255.0)
+
+    if auto_contrast:
+        lo = float(np.percentile(g, p_low))
+        hi = float(np.percentile(g, p_high))
+        if hi > lo + 1e-6:
+            g = (g - lo) / (hi - lo) * 255.0
+        g = np.clip(g, 0.0, 255.0)
+
+    gamma = float(gamma)
+    if gamma <= 0:
+        raise ValueError("gamma must be > 0")
+    if abs(gamma - 1.0) > 1e-6:
+        x = np.clip(g / 255.0, 0.0, 1.0)
+        g = np.power(x, gamma) * 255.0
+        g = np.clip(g, 0.0, 255.0)
+
+    return g
+
+
 def image_to_cell_grays(
     img: Image.Image,
     grid: CellGridSpec,
@@ -364,6 +398,19 @@ def main() -> None:
     p.add_argument("--center-y", type=float, default=0.5, help="Crop center y in [0,1] for center_crop mode.")
     p.add_argument("--invert", action="store_true")
     p.add_argument(
+        "--auto-contrast",
+        action="store_true",
+        help="Apply percentile-based contrast stretch before quantization (often makes output less dark).",
+    )
+    p.add_argument("--contrast-low", type=float, default=2.0, help="Lower percentile for auto-contrast.")
+    p.add_argument("--contrast-high", type=float, default=98.0, help="Upper percentile for auto-contrast.")
+    p.add_argument(
+        "--gamma",
+        type=float,
+        default=1.0,
+        help="Gamma correction before quantization (gamma<1 brightens, gamma>1 darkens).",
+    )
+    p.add_argument(
         "--method",
         choices=["hungarian", "pulp"],
         default="hungarian",
@@ -478,6 +525,13 @@ def main() -> None:
     mapped.save(mapped_path)
 
     gray = image_to_cell_grays(img, grid, invert=args.invert, resize_mode=resize_mode, center=center)
+    gray = adjust_gray(
+        gray,
+        auto_contrast=bool(args.auto_contrast),
+        p_low=float(args.contrast_low),
+        p_high=float(args.contrast_high),
+        gamma=float(args.gamma),
+    )
     beta = quantize_0_to_9(gray)
 
     q_path = out_dir / f"vertical_quantized_grid_{grid.rows}x{grid.cols}.png"
