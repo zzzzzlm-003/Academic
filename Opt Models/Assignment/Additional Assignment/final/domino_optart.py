@@ -395,7 +395,8 @@ def main() -> None:
     p.add_argument("--image", type=str, default=None, help="Path to input image. If omitted, uses test image.")
     p.add_argument("--resize-mode", choices=["stretch", "center_crop", "letterbox"], default="center_crop")
     p.add_argument("--center-x", type=float, default=0.5, help="Crop center x in [0,1] for center_crop mode.")
-    p.add_argument("--center-y", type=float, default=0.5, help="Crop center y in [0,1] for center_crop mode.")
+    # For portraits/subjects, slightly bias downward keeps the subject centered.
+    p.add_argument("--center-y", type=float, default=0.56, help="Crop center y in [0,1] for center_crop mode.")
     p.add_argument("--invert", action="store_true")
     p.add_argument(
         "--auto-contrast",
@@ -407,7 +408,7 @@ def main() -> None:
     p.add_argument(
         "--gamma",
         type=float,
-        default=1.0,
+        default=0.78,
         help="Gamma correction before quantization (gamma<1 brightens, gamma>1 darkens).",
     )
     p.add_argument(
