@@ -1,0 +1,923 @@
+IEORE4004
+Optimization Models
+and Methods
+
+Yaren Bilge Kaya, PhD                                          1
+
+
+Columbia University
+Department of Industrial Engineering and Operations Research
+Outline
+
+● Introduction to Network Models
+   ○ Basic concepts: graphs, edges, arcs, trees, …
+● Recap of Traveling Salesperson Problem
+   ○ LP formulation
+   ○ MTZ formulation
+● Shortest Path Problem
+   ○ LP formulation
+   ○ Dijkstra’s algorithm
+● Introduction to NetworkX library
+                                                     2
+        Introduction to
+        Network Models
+● Basic Concepts: Graphs, Edges, Arcs, Trees
+
+
+
+
+                                               3
+Introduction To Network Models
+
+A graph or network consists of:
+● A set V of vertices (nodes, points), and
+● A set E of edges (arcs, lines) involving two vertices, each.
+                                       Edge
+                      Edge             (2,3)
+                      (1,2)
+                              Node 2           Node 3
+             Node 1
+
+
+
+We may write V(G) to refer to the vertices or E(G) to refer to the edges.
+In the example shown below,
+● vertices V = {1,2,3,4,5} and edges E = {(1,2),(2,3),(3,5),(3,4)}
+                                                                            4
+Directed VS Undirected Networks
+
+
+
+
+                                  5
+Directed VS Undirected Networks
+
+
+
+
+             Directed                      Undirected
+
+
+            If an edge e does not have a direction,
+      we treat it the same way as having both directions!
+                                                            6
+Directed VS Undirected Networks
+
+● If an edge e between u and v goes from
+                                                 u   v
+  u to v, we write e = (u, v) (or from v to u,
+  we write e = (v, u))
+
+
+
+
+                                                         7
+Directed VS Undirected Networks
+
+● If an edge e between u and v goes from
+                                                 u   v
+  u to v, we write e = (u, v) (or from v to u,
+  we write e = (v, u))
+● If all edges do not have a direction (are
+  undirected), we say that the network is
+  undirected
+
+
+
+
+                                                         8
+Directed VS Undirected Networks
+
+● If an edge e between u and v goes from
+                                                     u       v
+  u to v, we write e = (u, v) (or from v to u,
+  we write e = (v, u))
+● If all edges do not have a direction (are
+  undirected), we say that the network is
+  undirected
+● Edges may have weight: a weight of                     u
+  edge e = (u, v) is a real number
+                                                 w           v
+  denoted c(e) or c(u,v), ce , cuv
+
+
+                                                                 9
+Basic Concepts Of Network Models
+
+A sequence of nodes and edges                              is
+● a path (directed path) if each    goes from   to
+● a chain (undirected path) if each    connects    and   (in some
+  direction)
+
+
+Often, we define paths as:
+
+●               (we omit vertices), or
+●               (we omit edges)
+
+
+
+                                                                    10
+Basic Concepts Of Network Models
+
+● A network is connected if for every two
+  nodes there is a path connecting them;
+  otherwise, it is disconnected              Connected Network
+
+
+
+
+                                            Disconnected Network
+
+
+
+
+                                                                   11
+Basic Concepts Of Network Models
+
+● A network is connected if for every two
+  nodes there is a path connecting them;
+  otherwise, it is disconnected                     Connected Network
+
+
+
+
+                                                   Disconnected Network
+
+
+
+● A cycle (loop, circuit) is a path starting and
+  ending in the same node, never repeating
+  any node or edge                                        Cycle
+
+
+
+                                                                          12
+Basic Concepts Of Network Models
+
+● A tree is an undirected graph that is
+  connected and acyclic.
+  ○ In simpler terms, it's a collection of nodes
+                                                   A Tree
+     and edges such that there is exactly one
+     path between any two nodes (no loops
+     exist).
+  ○ A tree with n nodes contains exactly n−1
+     edges.
+
+
+
+
+                                                            13
+Basic Concepts Of Network Models
+
+● A tree is an undirected graph that is
+  connected and acyclic.
+  ○ In simpler terms, it's a collection of nodes
+                                                   A Tree
+     and edges such that there is exactly one
+     path between any two nodes (no loops
+     exist).
+  ○ A tree with n nodes contains exactly n−1
+     edges.
+
+● A forest is an undirected, acyclic graph that
+  contains no cycles (not necessarily              A Forest
+  connected)
+                                                              14
+Basic Concepts Of Network Models
+
+Let’s evaluate:
+1. Adding any edge to a tree creates a cycle.
+
+                                                A Tree
+
+
+
+
+                                                         15
+Basic Concepts Of Network Models
+
+Let’s evaluate:
+1. Adding any edge to a tree creates a cycle.
+
+                                Yes!                A Tree
+
+
+
+
+                                                Adding an Edge
+
+
+
+
+                                                                 16
+Basic Concepts Of Network Models
+
+Let’s evaluate:
+1. Adding any edge to a tree creates a cycle.
+
+                                Yes!                A Tree
+
+
+
+
+                                                Adding an Edge
+
+
+1. Removing any edge from a tree creates a
+   disconnected forest.
+
+
+
+                                                                 17
+Basic Concepts Of Network Models
+
+Let’s evaluate:
+1. Adding any edge to a tree creates a cycle.
+
+                                Yes!                 A Tree
+
+
+
+
+                                                 Adding an Edge
+
+
+1. Removing any edge from a tree creates a
+   disconnected forest.                         Removing an Edge
+
+                                Yes!
+                                                                   18
+Examples: Transportation Networks
+
+
+                                                   Street networks where nodes are the
+                                                   intersections and edges are the streets
+
+
+
+
+Credit: 1940 Genuine Antique Map Lower Manhattan         Credit: What Life Is Like in the World's Most Crowded
+(New York). Courtesy of Maps of Antiquity.               Cities. Courtesy of Business Insider. Retrieved from
+Retrieved from https://mapsofantiquity.com.              https://www.businessinsider.com.                        19
+Examples: Transportation Networks
+
+
+                                                   Street networks where nodes are the
+                                                   intersections and edges are the streets
+
+
+
+
+Credit: 1940 Genuine Antique Map Lower Manhattan         Credit: What Life Is Like in the World's Most Crowded
+(New York). Courtesy of Maps of Antiquity.               Cities. Courtesy of Business Insider. Retrieved from
+Retrieved from https://mapsofantiquity.com.              https://www.businessinsider.com.                        20
+Examples: Social Networks
+
+                            Connections between
+                            people, such as
+                            friendships, familial ties,
+                            and professional
+                            relationships.
+
+                            Websites like LinkedIn and
+                            Facebook are online
+                            platforms for such
+                            networks.
+
+
+                                                          21
+Examples: Electricity Distribution Networks
+
+● Interconnected power
+  stations, transformers, and
+  transmission lines distributing
+  electricity.
+
+
+
+
+                                    Credit: Clean Energy Distribution Chain Infographic Concept,
+                                    Isometric 3D Electricity Grid Elements Windmill Turbine Power
+                                    Grid Powerhouse Transformer Providing Electricity Supply to the
+                                                                                                      22
+                                    City Buildings — Vector by aurielaki via Depositphotos.
+Examples: Electricity Distribution Networks
+
+● Interconnected power
+                                                                         2
+  stations, transformers, and
+                                                                3
+  transmission lines distributing
+  electricity.                                         4
+                                                                                           1
+                                              5
+                                                           6
+                                                  7
+                                         8
+
+
+                                                                             …
+                                                                 9
+                                    Credit: Clean Energy Distribution Chain Infographic Concept,
+                                    Isometric 3D Electricity Grid Elements Windmill Turbine Power
+                                    Grid Powerhouse Transformer Providing Electricity Supply to the
+                                                                                                      23
+                                    City Buildings — Vector by aurielaki via Depositphotos.
+More Examples
+Economic Networks
+• Trade Networks: Connections between countries, cities, or entities based
+  on trade relationships and routes.
+• Financial Networks: Banks, institutions, and individuals interconnected
+  through loans, deposits, and other financial instruments.
+Biological Networks
+• Neural Networks: Interconnected neurons in a brain or nervous system.
+• Metabolic Networks: Enzymes and metabolites in a biological system,
+  representing how various biochemical processes interact.
+• Ecological Networks: Predators and prey, symbiotic relationships, and
+  other interactions among species in an ecosystem.
+
+                                                                             24
+ Introduction to
+NetworkX Library
+
+
+
+
+                   25
+What is NetworkX?
+
+● NetworkX is a Python package to create, manipulate, and study
+  complex networks
+● Useful for modeling optimization problems: shortest path, flows,
+  connectivity
+● Works with both undirected and directed (graph and digraph)
+  networks
+● Integrates well with NumPy, matplotlib for analyses and
+  visualization
+
+
+
+                                                                     26
+What Can NetworkX Do?
+
+● Build graphs (nodes & edges) programmatically
+● Visualize networks with labels and custom colors
+● Analyze properties: shortest paths, connected components,
+  cycles
+● Model real-world optimization problems (transport, flows,
+  logistics)
+● Combine with solvers or OR libraries (like Gurobi, PuLP, SciPy)
+
+
+
+
+                                                                    27
+NetworkX – Getting Started
+
+
+Now, let’s switch to our notebook and see how to use NetworkX!
+
+
+
+
+                                                                 28
+The Traveling Salesperson
+        Problem
+
+● IP Formulation and the Problem of Subtour Growth
+● Miller, Tucker, Zemlin Formulation
+
+
+                                                     29
+Traveling Salesperson Problem
+
+● A salesperson needs to design a
+  route (“tour”) through n cities,
+  returning to their original location
+   ○ Would like to do so in the
+     shortest possible distance
+
+
+
+                                         Figure. Structure of the emergency logistics network. Adapted from “Route selection for
+                                         Emergency Logistics Management: A bio-inspired algorithm,” by X. Zhang, Z. Zhang, Y.
+                                         Zhang, D. Wei, and Y. Deng, 2013, Safety Science, 54, p. 89
+                                         (https://doi.org/10.1016/j.ssci.2012.12.003). Copyright 2013 by Elsevier.
+
+
+
+
+                                                                                                                                   30
+Formulating The TSP (Symmetric)
+
+● Suppose N is a set of cities, indexed by i and j.
+● Let di j be the distance from city i to city j, i ≠ j.
+
+                       if arc from node i to node j is traversed, i ≠ j;
+● Let
+                       otherwise.
+
+                             min
+
+                      subject to
+
+
+
+
+                                                               , ∀𝑆 ⊂ 𝑁
+
+
+                                                                           31
+Miller-Tucker-Zemlin TSP Formulation (Symmetric)
+
+    min
+                         Usually, the starting city (say city 1)
+                         is fixed with u₁ = 1 to anchor the
+subject to
+                         tour and provide a reference point
+                         for the ordering.
+
+
+
+
+                                                                   32
+The Shortest Path Problem
+
+ ● LP Formulation
+ ● Dijkstra’s algorithm
+
+
+
+
+                            33
+Shortest Path (SP) Problem
+
+ Given a network G = (V,E) with two distinguished vertices s, t ∈
+ V, find a shortest path from s to t.
+
+
+
+
+                                                                    34
+Shortest Path (SP) Problem
+
+ Given a network G = (V,E) with two distinguished vertices s, t ∈
+ V, find a shortest path from s to t.
+
+Example: A shortest path from s = 1 to t = 6 is 1, 2, 5, 6 of total length 5,
+while for t = 3 a shortest path is 1, 2, 5, 3 of length 4.
+
+
+
+
+                                                                                35
+Shortest Path (SP) Problem
+
+ Given a network G = (V,E) with two distinguished vertices s, t ∈
+ V, find a shortest path from s to t.
+
+Example: A shortest path from s = 1 to t = 6 is 1, 2, 5, 6 of total length 5,
+while for t = 3 a shortest path is 1, 2, 5, 3 of length 4.
+
+
+
+                                        There is no path from s to t = 4;
+                                        we indicate this by defining the
+                                        distance to 4 as ∞.
+
+                                                                                36
+LP Formulation for
+    SP Problem
+
+
+
+                     37
+LP Formulation For SP Problem
+
+● Decision variables: xij for each (i, j) ∈ E
+
+Min
+
+
+                                                      for each
+
+
+
+                                   for each
+
+
+This formulation is correct if no cycles with negative length exist!
+
+                                                                       38
+Example: LP Formulation for SP Problem
+
+Consider the directed network shown below. The problem of finding a
+shortest path from node 1 to node 6 can be written as follows:
+
+                            min
+                      Subject to
+
+
+
+
+                                                                      39
+Car Replacement Problem
+
+A new car costs $12,000. Annual maintenance costs are as follows:
+m₁ = $2,000 first year, m₂ = $4,000 second year, m₃ = $5,000 third
+year, m₄ = $9,000 fourth year, and m₅ = $12,000 fifth year and on. The
+car can be sold for s₁ = $7,000 in the first year, for s₂ = $6,000 in the
+second year, for s₃ = $2,000 in the third year, and for s₄ = $1,000 in
+the fourth year of ownership. An existing car can be sold at any time
+and another new car purchased at $12,000.
+
+
+
+
+                                                                            40
+Car Replacement Problem
+
+A new car costs $12,000. Annual maintenance costs are as follows:
+m₁ = $2,000 first year, m₂ = $4,000 second year, m₃ = $5,000 third
+year, m₄ = $9,000 fourth year, and m₅ = $12,000 fifth year and on.
+The car can be sold for s₁ = $7,000 in the first year, for s₂ = $6,000 in
+the second year, for s₃ = $2,000 in the third year, and for s₄ = $1,000
+in the fourth year of ownership. An existing car can be sold at any
+time and another new car purchased at $12,000.
+
+         What buying/selling strategy for the next 5 years
+         minimizes the total cost of ownership?
+
+
+                                                                            41
+Car Replacement Problem
+
+● Nodes = {1, 2, 3, 4, 5}
+● Edge (i, j) represents the act of buying a car in year i and selling
+  in year j. The weight is the price difference plus the
+  maintenance cost.
+
+
+
+
+                                                                         42
+Car Replacement Problem
+
+● Nodes = {1, 2, 3, 4, 5}
+● Edge (i, j) represents the act of buying a car in year i and selling
+  in year j. The weight is the price difference plus the
+  maintenance cost.
+
+
+
+    Selling after 1 year of use
+
+
+
+
+                                                                         43
+Car Replacement Problem
+
+● Nodes = {1, 2, 3, 4, 5}
+● Edge (i, j) represents the act of buying a car in year i and selling
+  in year j. The weight is the price difference plus the
+  maintenance cost.
+
+
+
+    Selling after 1 year of use            Selling after 2 years of use
+
+
+
+
+                                                                          44
+Car Replacement Problem
+
+Now, we can represent this problem as a network, and solve it as the
+shortest path problem!
+
+
+
+
+                                                                       45
+Dijkstra’s Algorithm
+
+
+
+
+                       46
+Dijkstra’s algorithm
+
+● This algorithm is used to compute a shortest path from a given
+ node s to every other node (not only t)
+
+    In this case edge-weights are assumed to be non-negative,
+    else the algorithm may output an incorrect answer
+
+
+
+
+                                                                   47
+Dijkstra’s algorithm
+
+● This algorithm is used to compute a shortest path from a given
+ node s to
+         to every
+            every other
+                  other node
+                        node (not
+                              (not only
+                                   only t)t)
+
+    In this case edge-weights are assumed to be non-negative,
+    else the algorithm may output an incorrect answer
+
+In a nutshell:
+      It finds the shortest path between two nodes in a graph by
+      iteratively selecting the closest unvisited node and updating
+      the distances of its neighbors.
+
+                                                                      48
+Dijkstra’s algorithm
+
+
+Step 1: Define du for
+                  for each
+                      each   ,,,, an
+                                  an estimate
+                                     estimate on
+                                              on the
+                                                 the distance
+                                                     distance from
+                                                              from ss to
+                                                                      to uu
+
+Step 2: Initialize
+
+
+
+
+                                                                              49
+Dijkstra’s algorithm
+
+
+Step 1: Define du for each       ,, an estimate on the distance from s to u
+
+Step 2: Initialize
+
+All vertices are initially unprocessed,
+therefore:
+
+
+
+
+                                                                              50
+Dijkstra’s algorithm
+
+
+Step 3: Find an unprocessed vertex u with smallest du
+
+Step 4: For each (u, v) ∈ E, update dv = min {dv ,du + Cuv }
+
+Step 5: Mark u as processed; repeat until all vertices are processed
+
+Step 6: Report dt as distance from s to t
+
+
+
+
+                                                                       51
+Example: Dijkstra’s algorithm
+
+                         Initialize:
+
+
+
+
+                                       52
+Example: Dijkstra’s algorithm
+
+                         Initialize:
+
+                        Then, check
+
+                         and update
+
+
+
+
+                                       53
+Example: Dijkstra’s algorithm
+
+                         Initialize:
+
+                        Then, check
+
+                         and update
+
+                          Do the same thing for all the
+                               unvisited nodes!
+
+
+                          and update
+
+                                                          54
+Example: Dijkstra’s algorithm
+
+
+                         Now,       min
+                         and update
+
+
+
+
+                                          55
+Example: Dijkstra’s algorithm
+
+
+                         Now,       min
+                         and update
+
+
+
+
+                                          56
+Example: Dijkstra’s algorithm
+
+
+                    Finding   affects   as
+                                  min
+
+
+
+
+                                             57
+Example: Dijkstra’s algorithm
+
+
+                    Finding   affects        as
+                                    min
+
+
+
+
+                       Finally, let’s find
+                                      min
+
+
+
+                                                  58
+Example: Dijkstra’s algorithm
+
+
+                    Finding   affects        as
+                                    min
+
+
+
+
+                       Finally, let’s find
+                                      min
+
+
+                         Shortest path from s to t is 5!
+                                                           59
+Example: Dijkstra’s algorithm
+This method can also be shown in table format:
+
+                        Step #
+
+
+
+
+                                                 60
+Example: Project Management Problem
+
+
+Background:
+
+A company wants to introduce a new model of its ever-popular cell
+phone to the market. To gauge the demand, a limited batch of product
+is to be brought to the market. The product is assembled from two
+parts, a circuit board, and housing. In addition, workers need to be
+trained and raw material procured.
+
+
+
+
+                                                                       61
+Example: Project Management Problem
+
+After the initial assessment, the project manager put together a list of
+all tasks along with estimated duration of each task. The tasks are
+interdependent, some need to finish before others can start.
+
+
+First, (A) workers need to be trained and (B) raw materials purchased
+which takes 6 and 9 days, respectively. After these tasks are finished,
+both parts of the product, (C) the circuit board and (D) the housing,
+are manufactured taking 7 and 8 days, respectively. Each circuit
+board, once manufactured, needs to undergo additional testing (E) to
+comply with FCC regulation which takes 10 days. Afterwards, the cell
+phone is assembled, packaged, and shipped (F) which takes 12 days.
+                                                                           62
+Example: Project Management Problem
+
+
+Question:
+
+What is the minimum number of days before the product can reach the
+market? What is the critical path of the production, i.e., the sequence of
+tasks delaying any of which delays the whole production?
+
+
+
+
+                                                                             63
+Example: Project Management Problem
+
+We identify main checkpoints:
+
+● (1) start, (2) completion of tasks A and B,
+● (3) completion of task D, (4) completion of tasks C, E, and
+● (5) finish
+
+Nodes {1, 2, 3, 4, 5}
+
+
+
+
+                                                                64
+Example: Project Management Problem
+
+We identify main checkpoints:
+
+● (1) start, (2) completion of tasks A and B,
+● (3) completion of task D, (4) completion of tasks C, E, and
+● (5) finish
+
+Nodes {1, 2, 3, 4, 5}
+
+
+        Edges correspond to tasks that connect checkpoints,
+        weights are durations with negative sign.
+
+
+                                                                65
+Example: Project Management Problem
+
+Represent this in the network form
+
+
+                               timeline
+
+
+
+
+                                          TODAY, DAY = 0
+
+
+
+
+                                                           66
+Example: Project Management Problem
+
+Represent this in the network form
+
+
+                               timeline
+
+
+
+
+                                                  TODAY, DAY = 0
+
+
+
+                                          9 + 17 + 12 = 38 days
+
+
+                                                                   67
+Announcement
+
+●   On Wednesday, March 25th we will have an in-class assignment that will:
+    ○ Involve programming
+
+    ○ Focus on the network models covered so far
+
+    ○ Take the whole class time
+
+    ○ Be completed individually & submitted during the class
+●   Notes:
+    ○ No AI tools will be used
+
+    ○ Attendance will be taken
+
+    ○ This will impact your final course grade as Assignment 4
+
+
+
+                                                                              68
+

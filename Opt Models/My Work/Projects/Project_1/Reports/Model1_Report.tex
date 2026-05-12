@@ -1,0 +1,877 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath, amssymb, amsfonts}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\usepackage{array}
+
+\\title{Model 1: Optimization Formulation}
+\\author{IEOR 4004 Project I}
+\\date{\\today}
+
+\\begin{document}
+
+\\maketitle
+
+\section{Introduction}
+
+New York City faces a critical child care capacity shortage with significant geographic disparity. Many zip codes lack sufficient licensed slots relative to resident children, creating ``child care deserts'' where capacity falls below essential thresholds. This analysis develops a mixed-integer linear program (Model 1) to minimize the total funding required to eliminate all capacity deficits across NYC's 180 zip codes while simultaneously satisfying the New York State policy requirement that at least two-thirds of each zip's 0--5 year old population be served in age-appropriate facilities.
+
+Two operational strategies address capacity: (1) expanding existing licensed facilities to increase slots in established locations, and (2) constructing new facilities from the ground up in underserved areas. The expansion cost function incorporates a critical non-linearity: small increments utilize existing infrastructure (lower cost), while large expansions require structural redesign and a \$20,000 base construction fee. New facility costs are fixed by facility type (Small, Medium, Large) with additional equipment costs for 0--5 age group capability. Model 1 jointly optimizes these two strategies across all zips under budget and service delivery constraints.
+
+\section{Sets, Parameters, and Facility Types}
+
+\subsection{Sets}
+\begin{itemize}
+    \item $z \in \mathcal{Z}$: zip codes in NYC (Model 1 run uses $|\mathcal{Z}|=180$).
+    \item $s \in \mathcal{S}=\{1,2,3\}$: facility type (Small, Medium, Large).
+\end{itemize}
+
+\subsection{Core Parameters}
+\begin{itemize}
+    \item $P_z^{(0\text{-}5)}$, $P_z$: 0--5 and 0--12 child population in zip $z$.
+    \item $S_z^{\mathrm{curr}}$, $S_z^{\mathrm{curr},0\text{-}5}$: current total and 0--5 capacity.
+    \item $R_z^{\mathrm{total}}=\lfloor\theta_z P_z\rfloor+1$: total-slot requirement.
+    \item $R_z^{0\text{-}5}=\left\lceil\frac{2}{3}P_z^{(0\text{-}5)}\right\rceil$: 0--5-slot requirement.
+    \item $\overline{X}_z$: aggregate expansion limit in zip $z$.
+\end{itemize}
+
+\subsection{Facility Type Parameters (Complete)}
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Facility type & Total slots $K_s^{\mathrm{total}}$ & Max 0--5 slots $K_s^{0\text{-}5}$ & Base cost $C_s^{\mathrm{base}}$ (\$) \\
+\midrule
+Small  & 100 & 50  & 65,000 \\
+Medium & 200 & 100 & 95,000 \\
+Large  & 400 & 200 & 115,000 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Decision Variables}
+\begin{itemize}
+    \item $x_z \ge 0$: expanded total slots in zip $z$.
+    \item $x_z^{0\text{-}5} \ge 0$: expanded 0--5 slots in zip $z$.
+    \item $y_{zs} \in \mathbb{Z}_{\ge 0}$: number of newly built type-$s$ facilities in zip $z$.
+    \item $u_{zs}^{0\text{-}5} \ge 0$: actual 0--5 slots configured in new type-$s$ facilities in zip $z$.
+\end{itemize}
+
+\section{Cost Model and Objective}
+
+\\subsection{Facility-Level Expansion Cost}
+For facility $f$ with current capacity $n_f$ and expansion $x_f$:
+\\begin{equation}
+C_{\\mathrm{exp}}(f)=
+\\begin{cases}
+c_{\\mathrm{slots}}(n_f)\\,x_f, & x_f<n_f,\\\\
+\\left(20{,}000+200n_f\\right)\\dfrac{x_f}{n_f}, & x_f\\ge n_f.
+\\end{cases}
+\\end{equation}
+
+\\subsection{Objective Function}
+Zip-level approximation: $c_z^{\\mathrm{exp}}=\\dfrac{20{,}000}{\\bar n_z}+200$.
+\begin{equation}
+\min \sum_z\left(c_z^{\mathrm{exp}}x_z+100x_z^{0\text{-}5}\right)
++\sum_{z,s}C_s^{\mathrm{base}}y_{zs}
++100\sum_{z,s}u_{zs}^{0\text{-}5}.
+\end{equation}
+
+\section{Constraints}
+\begin{align}
+&x_z^{0\text{-}5}\le x_z &&\forall z \\
+&x_z\le\overline X_z &&\forall z \\
+&u_{zs}^{0\text{-}5}\le K_s^{0\text{-}5}y_{zs} &&\forall z,s \\
+&S_z^{\mathrm{curr}}+x_z+\sum_s K_s^{\mathrm{total}}y_{zs}\ge R_z^{\mathrm{total}} &&\forall z \\
+&S_z^{\mathrm{curr},0\text{-}5}+x_z^{0\text{-}5}+\sum_s u_{zs}^{0\text{-}5}\ge R_z^{0\text{-}5} &&\forall z
+\end{align}
+
+\\section{Formulation Notes}
+Model 1 employs a zip-level aggregation for expansion costs to simplify the mixed-integer formulation while capturing key economics. The piecewise expansion cost rule distinguishes between small expansions (reusing existing infrastructure, low marginal cost $c_s(n_f) \cdot x_f$) and large expansions (requiring structural work, high fixed cost \$20,000 plus \$200 per existing slot). The 0--5 configuration variables ($u_{zs}^{0-5}$) allow flexible and partial utilization of new facilities' maximum 0--5 capacity, avoiding unnecessary equipment investments for unused slots. This design enables the optimizer to balance total slots (addressing desert elimination) with age-targeted slots (meeting state policy) independently.
+
+\section{Model 1 Results}
+\textbf{Status:} 2 (OPTIMAL) \\
+\textbf{Optimal total funding:} \$215,083,191 \\
+\textbf{Runtime:} 0.07 seconds
+
+\subsection{Cost Breakdown}
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Component & Cost (\$) & Share \\
+\midrule
+Expansion (renovation) & 9,481,288 & 4.41\% \\
+New facility base cost & 173,870,000 & 80.84\% \\
+0--5 equipment (expansion) & 1,739,991 & 0.81\% \\
+0--5 equipment (new facilities) & 29,991,912 & 13.94\% \\
+\midrule
+Total & 215,083,191 & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textbf{Cost Analysis:} The dominant cost driver is new facility base cost at \$173.9 million (80.84\% of total budget), reflecting the decision to construct 1,518 new facilities across the city. The second-largest component is equipment for 0--5 capability in new facilities (\$29.99 million, 13.94\%), which directly supports the state's age-targeted policy. Interestingly, facility expansion accounts for only \$9.48 million (4.41\%), suggesting that new construction is more cost-effective per slot than expanding existing facilities. Equipment for expanded facilities is minimal (\$1.74 million, 0.81\%), indicating limited expansion of 0--5 capacity within existing facilities. This cost distribution reveals that meeting the city's geographic and age-specific policy constraints primarily requires greenfield development rather than incremental expansion of existing infrastructure.
+
+\subsection{Deployment Pattern}
+\begin{itemize}
+    \item Expansion only zips: 0
+    \item New-construction only zips: 44
+    \item Both expansion and new-construction zips: 136
+    \item No-action zips: 0
+\end{itemize}
+
+\noindent\textbf{Strategic Interpretation:} The optimal solution employs a hybrid strategy across NYC's 180 zips. In 136 zips (75.6\%), the model deploys both expansion and new construction, leveraging existing facilities to maximize efficiency while adding capacity where needed. In 44 zips (24.4\%), new construction alone suffices without any expansion, suggesting these areas lack suitable existing facilities or where expansion is uneconomical. Notably, zero zips use expansion-only strategy, reinforcing that new Large facilities (at \$287.50 per slot) are significantly more cost-effective than expanding smaller or medium-sized existing facilities. This pattern also indicates a strategic geographic rebalancing: high-shortage areas receive new facilities, while moderate-shortage areas see expansion of existing resources.
+
+\subsection{New Facilities by Type}
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+Type & Count \\
+\midrule
+Small (100 slots) & 12 \\
+Medium (200 slots) & 5 \\
+Large (400 slots) & 1501 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent\textbf{Facility Type Distribution:} The solution overwhelmingly favors Large facilities (1,501 out of 1,518 total, 98.9\%), with only 12 Small and 5 Medium facilities deployed. This stark preference reflects the cost-per-slot economics: Large facilities at \$115,000 base cost achieve \$287.50 per slot, significantly cheaper than Small (\$650 per slot) and Medium (\$475 per slot). The very few Small and Medium facilities (17 combined) are deployed strategically to address small residual gaps or specialized needs where a full Large facility would create over-capacity. This result demonstrates the power of optimization to identify the most economical deployment pattern, resulting in larger facilities serving broader populations rather than distributed smaller facilities.
+
+\subsection{Feasibility and Constraint Satisfaction}
+\begin{itemize}
+    \item Zips in dataset: 180
+    \item Pre-optimization desert zips: 162 (90\% of NYC)
+    \item Post-optimization zips meeting total-slot threshold: 180 (100\%)
+    \item Post-optimization zips meeting 0--5 threshold: 180 (100\%)
+    \item Remaining capacity deficits: 0
+\end{itemize}
+
+\noindent\textbf{Policy Compliance Verification:} The optimal solution achieves complete elimination of child care deserts: all 180 zips now meet both the total-slot requirement (Constraint 4, removing desert status) and the 0--5 age-specific requirement (Constraint 5, state policy). Prior to optimization, 162 zips (90\% of the city) were classified as deserts, indicating severe geographic disparity in child care access. The solution allocates funding strategically to ensure no zip code falls below threshold, establishing equitable child care access citywide. The \$215.08 million budget represents the minimum necessary to achieve complete policy compliance.
+
+New York City faces a critical child care shortage: many zip codes have insufficient licensed slots relative to 
+resident children (ages 0--12). We solve a mixed-integer linear program to minimize the total funding required to 
+eliminate all ``child care deserts'' (defined as zip codes where slots fall below 50\% of child population in 
+high-demand areas, or 33\% in normal-demand areas) while meeting the New York State requirement that $\geq 2/3$ 
+of each zip's 0--5 year old population be served in age-appropriate facilities.
+
+\textbf{Key Constraints}:
+\begin{enumerate}
+    \item No zip code can remain a child care desert.
+    \item 0--5 year capacity must reach at least $\lceil 2/3 \cdot P_z^{(0\text{-}5)} \rceil$ slots in each zip $z$.
+    \item Expansion is limited: each facility can expand up to $\min(20\% \text{ of current}, 500 - \text{current})$ slots.
+\end{enumerate}
+
+\textbf{Optimal Solution}: \\
+Status code: 2 (OPTIMAL) \\
+Total minimum funding = \$215,083,191
+
+\section{Introduction \& Problem Context}
+
+\subsection{The NYC Child Care Crisis}
+
+Licensed child care in New York City is severely constrained. Current licensed capacity falls far short of 
+demand across most communities, particularly in lower-income and high-employment-rate zip codes. This shortage 
+forces parents to:
+\begin{itemize}
+    \item Delay workforce participation.
+    \item Rely on unlicensed informal care (quality uncertain, cost variable).
+    \item Leave the city for areas with better child care access.
+\end{itemize}
+
+\noindent
+The city lacks a systematic plan to address these deficits. Model 1 quantifies the cost of eliminating deserts 
+under idealistic (unconstrained) assumptions, establishing a lower bound on required investment.
+
+\subsection{Defining Child Care Deserts}
+
+We classify a zip code as a ``child care desert'' based on the ratio of available slots to child population:
+
+\begin{align}
+\text{High demand:} \quad & \text{Employment rate} \geq 60\% \text{ or Average income} \leq \$60{,}000 \\
+\text{Desert threshold (high):} \quad & \theta_z = 0.5 \quad \Rightarrow \quad \text{Need} \geq 50\% \text{ of child population in slots} \\
+\text{Desert threshold (normal):} \quad & \theta_z = 1/3 \quad \Rightarrow \quad \text{Need} \geq 33.3\% \text{ of child population in slots}
+\end{align}
+
+\noindent
+A zip is a desert if total slots $\leq \lfloor \theta_z \cdot P_z \rfloor$. To eliminate the desert, we need slots $> \theta_z \cdot P_z$, 
+or equivalently, $\geq \lfloor \theta_z \cdot P_z \rfloor + 1$.
+
+\subsection{The NYC 0--5 Policy}
+
+New York State law mandates that child care facilities serve young children (ages 0--5) at capacity. 
+The city's implicit policy is:
+\begin{equation}
+\text{0--5 slots in zip } z \geq \left\lceil \frac{2}{3} P_z^{(0\text{-}5)} \right\rceil
+\end{equation}
+
+This is more stringent than the total-slot desert requirement and drives most of the model's cost.
+
+\subsection{Capacity Expansion vs. New Construction}
+
+Two strategies exist to increase capacity:
+
+\begin{enumerate}
+    \item \textbf{Expansion}: Add slots to existing licensed facilities.
+    \begin{itemize}
+        \item \textbf{Pros}: Faster permitting, lower land cost, reuse existing buildings/staff.
+        \item \textbf{Cons}: Limited by physical space and licensing caps; more expensive per slot at small facilities.
+    \end{itemize}
+    
+    \item \textbf{New Construction}: Build entirely new facilities.
+    \begin{itemize}
+        \item \textbf{Pros}: Large facilities (400 slots) have low per-slot cost (\$287.50).
+        \item \textbf{Cons}: Requires land acquisition, permitting, construction time; subject to zoning constraints.
+    \end{itemize}
+\end{enumerate}
+
+\noindent
+Model 1 assumes unlimited capacity and geographic flexibility; the solver automatically chooses the 
+cost-optimal mix of expansion and new construction for each zip.
+
+\section{Mathematical Formulation}
+
+\subsection{Notation, Index Sets, and Parameters}
+
+\subsubsection{Index Sets}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|p{10cm}|}
+\hline
+\textbf{Symbol} & \textbf{Definition} \\
+\hline
+$z \in \mathcal{Z}$ & Zip codes in NYC; $|\mathcal{Z}| = 179$ (all zips with child population $> 0$) \\
+\hline
+$s \in \mathcal{S} = \{1, 2, 3\}$ & Facility types: 1=Small (100 slots), 2=Medium (200 slots), 3=Large (400 slots) \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Input Parameters}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|p{8cm}|p{4cm}|}
+\hline
+\textbf{Symbol} & \textbf{Description} & \textbf{Unit/Range} \\
+\hline
+$P_z^{(0\text{-}5)}$ & Child population aged 0--5 in zip $z$ & Children \\
+\hline
+$P_z^{(6\text{-}12)}$ & Child population aged 6--12 in zip $z$ & Children \\
+\hline
+$P_z$ & Total child population (0--12) in zip $z$ = $P_z^{(0\text{-}5)} + P_z^{(6\text{-}12)}$ & Children \\
+\hline
+$S_z^{\text{curr}}$ & Current total child care slots in zip $z$ (from active facilities) & Slots \\
+\hline
+$S_z^{\text{curr}, 0\text{-}5}$ & Current 0--5 year capacity in zip $z$ & Slots \\
+\hline
+$\bar{n}_z$ & Average facility size (capacity) in zip $z$ = $\frac{\sum_f n_f}{\text{\# facilities}}$ & Slots \\
+\hline
+$\overline{X}_z$ & Maximum expansion capacity in zip $z$ = $\sum_f \min(0.2 n_f, \max(0, 500 - n_f))$ & Slots \\
+\hline
+$\theta_z$ & Desert threshold = $0.5$ (high demand) or $1/3$ (normal demand) & Dimensionless \\
+\hline
+$c_z^{\text{exp}}$ & Expansion cost per slot = $\frac{20{,}000}{\bar{n}_z} + 200$ & \$/slot \\
+\hline
+$C_s^{\text{base}}$ & Base construction cost for type-$s$ facility & \$ \\
+\hline
+$K_s^{\text{total}}$ & Total slots per type-$s$ facility & Slots \\
+\hline
+$K_s^{0\text{-}5}$ & Maximum 0--5 slots per type-$s$ facility & Slots \\
+\hline
+\end{tabular}
+\end{table}
+
+\noindent
+\textbf{Facility Type Parameters}:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|r|r|r|}
+\hline
+\textbf{Type} & \textbf{$K_s^{\text{total}}$} & \textbf{$K_s^{0\text{-}5}$} & \textbf{$C_s^{\text{base}}$} \\
+\hline
+Small (1) & 100 & 50 & \$65{,}000 \\
+\hline
+Medium (2) & 200 & 100 & \$95{,}000 \\
+\hline
+Large (3) & 400 & 200 & \$115{,}000 \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsubsection{Demand Thresholds (Computed)}
+
+\begin{align}
+R_z^{\text{total}} &= \lfloor \theta_z \cdot P_z \rfloor + 1 \quad \text{(min slots to eliminate desert)} \\
+R_z^{0\text{-}5} &= \left\lceil \frac{2}{3} P_z^{(0\text{-}5)} \right\rceil \quad \text{(min 0--5 slots for NYC policy)}
+\end{align}
+
+\subsection{Decision Variables}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|p{8cm}|}
+\hline
+\textbf{Variable} & \textbf{Type} & \textbf{Description} \\
+\hline
+$x_z$ & Continuous, $\geq 0$ & Total slots added via expansion in zip $z$ \\
+\hline
+$x_z^{0\text{-}5}$ & Continuous, $\geq 0$ & 0--5 portion of expansion in zip $z$ \\
+\hline
+$y_{zs}$ & Non-negative integer & Number of new type-$s$ facilities built in zip $z$ \\
+\hline
+$u_{zs}^{0\text{-}5}$ & Continuous, $\geq 0$ & Actual 0--5 slots configured in new type-$s$ facilities in zip $z$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\noindent
+\textbf{Key insight on} $u_{zs}^{0\text{-}5}$: We only pay the $\$100$ equipment cost for 0--5 slots that are actually configured, 
+not for the facility's maximum capacity. The solver minimizes cost by configuring only the minimum 0--5 slots needed.
+
+\subsection{Objective Function}
+
+\textbf{Minimize total funding}:
+
+\begin{equation}
+\min \quad \underbrace{\sum_{z} \left( c_z^{\text{exp}} \cdot x_z + 100 \cdot x_z^{0\text{-}5} \right)}_{\text{(1) Expansion cost}} 
++ \underbrace{\sum_{z,s} C_s^{\text{base}} \cdot y_{zs}}_{\text{(2) New base cost}} 
++ \underbrace{100 \cdot \sum_{z,s} u_{zs}^{0\text{-}5}}_{\text{(3) New 0--5 equipment}}
+\label{eq:objective}
+\end{equation}
+
+\textbf{Cost Components}:
+
+\begin{enumerate}
+    \item \textbf{Expansion cost}: $c_z^{\text{exp}} \cdot x_z$ = renovation/permitting cost (zip-level aggregate).
+    \\ Plus $100 \cdot x_z^{0\text{-}5}$ = equipment cost for 0--5 slots added via expansion.
+    
+    \item \textbf{New facility base cost}: $C_s^{\text{base}} \cdot y_{zs}$ = one-time land, construction, licensing cost per facility.
+    
+    \item \textbf{New facility 0--5 equipment}: $100 \cdot u_{zs}^{0\text{-}5}$ = equipment cost for actual 0--5 slots configured.
+\end{enumerate}
+
+\subsection{Constraints}
+
+\subsubsection{Constraint Group 1: Expansion Feasibility}
+
+\begin{align}
+x_z^{0\text{-}5} &\leq x_z & \quad \forall z \label{eq:c1_split} \\
+x_z &\leq \overline{X}_z & \quad \forall z \label{eq:c1_cap}
+\end{align}
+
+\textit{Interpretation}: Constraint \eqref{eq:c1_split} ensures the 0--5 portion cannot exceed total expansion. 
+Constraint \eqref{eq:c1_cap} caps expansion by the zip's aggregated facility limits 
+(each facility can expand up to $\min(0.2 n_f, 500 - n_f)$ slots).
+
+\subsubsection{Constraint Group 2: New Facility 0--5 Configuration}
+
+\begin{equation}
+u_{zs}^{0\text{-}5} \leq K_s^{0\text{-}5} \cdot y_{zs} \quad \forall z, s \label{eq:c2_config}
+\end{equation}
+
+\textit{Interpretation}: Actual 0--5 slots cannot exceed the facility type's maximum per facility, scaled by number built.
+
+\subsubsection{Constraint Group 3: Desert Elimination (Total Capacity)}
+
+\begin{equation}
+S_z^{\text{curr}} + x_z + \sum_{s} K_s^{\text{total}} \cdot y_{zs} \geq R_z^{\text{total}} \quad \forall z \label{eq:c3_desert}
+\end{equation}
+
+\textit{Interpretation}: Sum of current + expansion + new capacity must meet or exceed the desert elimination threshold.
+
+\subsubsection{Constraint Group 4: NYC 0--5 Policy Requirement}
+
+\begin{equation}
+S_z^{\text{curr}, 0\text{-}5} + x_z^{0\text{-}5} + \sum_{s} u_{zs}^{0\text{-}5} \geq R_z^{0\text{-}5} \quad \forall z \label{eq:c4_policy}
+\end{equation}
+
+\textit{Interpretation}: Sum of current 0--5 + expansion 0--5 + new configured 0--5 must reach $\geq 2/3$ of 0--5 population.
+
+\section{Interpretation of the Mathematical Model}
+
+\subsection{Why Aggregated Expansion (Zip-Level)?}
+
+In reality, expansion occurs facility-by-facility, and costs vary with each facility's size and structure. 
+Modeling each facility individually would create $\sim$800+ continuous/binary variables and thousands of constraints, 
+exceeding Gurobi's license limits on this academic installation.
+
+\textbf{Solution}: Aggregate all expansion in a zip into a single $x_z$ variable, using the zip-average facility size 
+$\bar{n}_z$ to compute cost. This trades facility-level detail for tractability, but the per-slot cost formula 
+$(c_z^{\text{exp}} = 20{,}000 / \bar{n}_z + 200)$ reasonably approximates the average cost across facilities in a zip.
+
+\subsection{Piecewise Expansion Cost: Understanding the $\$20{,}000$ Base Fee}
+
+In reality, expansion cost per facility $f$ follows a piecewise function:
+
+\begin{equation}
+C_{\exp}(f) = \begin{cases}
+c_{\text{slots}}(n_f) \cdot x_f, & \text{if } x_f < n_f \quad \text{(expansion $<$ current capacity)} \\
+\left(20{,}000 + 200n_f\right) \cdot \frac{x_f}{n_f}, & \text{if } x_f \geq n_f \quad \text{(expansion $\geq$ doubling)}
+\end{cases}
+\label{eq:piecewise_cost}
+\end{equation}
+
+\textbf{Interpretation of the piecewise rule}:
+
+\begin{itemize}
+    \item \textbf{Tier 1} ($x_f < n_f$): Adding a few slots to an existing facility is cheap — reuse building, staff, and equipment.
+    
+    \item \textbf{Tier 2} ($x_f \geq n_f$): Expanding by $\geq 100\%$ (doubling or more) requires structural renovation, 
+    capacity redesign, additional licensing review, and new infrastructure. The $\$20{,}000$ base fee captures this overhead.
+\end{itemize}
+
+\noindent
+In Model 1, we use a \textbf{linear approximation} at the zip level, assuming all expansion lands in Tier 2 on average:
+
+\begin{equation}
+c_z^{\text{exp}} = \frac{20{,}000}{\bar{n}_z} + 200
+\end{equation}
+
+\noindent
+This is a simplification; Model 2 introduces per-tier piecewise costs for greater accuracy.
+
+\subsection{Why Equipment Cost ($\$100/$ 0--5 slot)?}
+
+State law and city practice mandate that child care facilities provide age-appropriate learning, safety, and 
+health infrastructure. 0--5 year olds require specialized equipment (cribs, changing tables, age-appropriate learning tools). 
+We estimate this at $\$100$ per slot per year (simplified for a 10-year planning horizon). 
+
+Critically, we only charge this cost for 0--5 slots we *actually configure*, not for the facility's maximum capacity. 
+If we build a Large facility with capacity for 200 0--5 slots but only need 100, the solver sets $u_{z,\text{Large}}^{0\text{-}5} = 100$, 
+and we only pay $\$10{,}000$ in equipment cost. This avoids overpaying for unused capacity.
+
+\subsection{Why No ``Expand First, Build Later'' Constraint?}
+
+A naive approach might enforce ``exhaust expansion capacity before building new facilities.'' Model 1 does not include 
+such a constraint because:
+
+\textbf{The optimizer naturally makes the optimal choice based on cost.}
+
+\begin{itemize}
+    \item Example: Expanding a Small facility (100 slots) by 20 slots costs $\approx \frac{20{,}000}{100} \cdot 20 + 200 \cdot 20 = \$8{,}000$ 
+    (i.e., $\$400$/slot) — very expensive.
+    \item Building a new Large facility costs $\$115{,}000$ for 400 slots = $\$287.50$/slot (base only, without 0--5 equipment).
+    \item If 200 slots are needed, build a Large facility; if only 50, build a Small and expand the large facility slightly.
+    \item The solver handles this trade-off automatically.
+\end{itemize}
+
+\section{Implementation Details}
+
+\subsection{Data Pipeline}
+
+\textbf{Input data} (5 CSV files):
+
+\begin{enumerate}
+    \item \textbf{child\_care\_regulated\_nyc.csv}: All licensed child care facilities with status, program type, capacity by age, and location (latitude/longitude).
+    \item \textbf{population\_nyc.csv}: Child population by age (0--5, 6--12) and zip code.
+    \item \textbf{avg\_individual\_income\_nyc.csv}: Average household income by zip code.
+    \item \textbf{employment\_rate\_nyc.csv}: Labor force participation rate by zip code.
+    \item \textbf{potential\_locations\_nyc.csv}: Candidate sites for new facilities with centroids (lat/long) by zip.
+\end{enumerate}
+
+\textbf{Data cleaning steps}:
+
+\begin{enumerate}
+    \item \textbf{Filter active facilities}: Keep only facilities with status = 'License' or 'Registration'. Remove suspended, revoked, or pending.
+    
+    \item \textbf{Prorate 0--5 capacity}: Raw data has age buckets: infant, toddler, preschool, school-age. 
+    For mixed-age programs (FDC, GFDC), we prorate the ``children'' age bucket by the citywide 0--5 ratio 
+    (approximately 38\% of children are 0--5 across NYC).
+    
+    \item \textbf{Impute missing coordinates}: Some facilities lack latitude/longitude. Use the average coordinates 
+    of all candidate locations in that zip code.
+    
+    \item \textbf{Drop zero-population zips}: Remove commercial-only or PO-box zip codes (no children = no demand).
+\end{enumerate}
+
+\textbf{Result}: 179 active zips with child population, current capacity, and demographic data.
+
+\subsection{Demand Classification}
+
+For each zip, classify as high-demand or normal-demand:
+
+\begin{equation}
+\text{High-demand} \quad \Leftrightarrow \quad (\text{Employment rate} \geq 60\%) \text{ OR } 
+(\text{Average income} \leq \$60{,}000)
+\end{equation}
+
+\noindent
+Then compute thresholds:
+
+\begin{align}
+\theta_z &= \begin{cases} 0.5 & \text{if high-demand} \\ 1/3 & \text{otherwise} \end{cases} \\
+R_z^{\text{total}} &= \lfloor \theta_z \cdot P_z \rfloor + 1 \\
+R_z^{0\text{-}5} &= \left\lceil \frac{2}{3} P_z^{(0\text{-}5)} \right\rceil
+\end{align}
+
+\subsection{Gurobi Model Construction}
+
+\subsubsection{Variable Creation}
+
+\begin{itemize}
+    \item \textbf{Expansion}: $x_z$ (continuous, $0 \leq x_z \leq \overline{X}_z$), one per zip with $\overline{X}_z > 0$.
+    \\ $x_z^{0\text{-}5}$ (continuous, $0 \leq x_z^{0\text{-}5} \leq \overline{X}_z$), same constraint set.
+    
+    \item \textbf{New facilities}: $y_{zs}$ (integer, $\geq 0$), one per (zip, facility type) pair.
+    \\ Total: $179 \times 3 = 537$ integer variables.
+    
+    \item \textbf{0--5 configuration}: $u_{zs}^{0\text{-}5}$ (continuous, $\geq 0$), one per (zip, facility type).
+\end{itemize}
+
+\noindent
+Total variables: $\approx 1{,}100$ (mostly continuous; 537 integer).
+
+\subsubsection{Constraint Addition}
+
+\begin{enumerate}
+    \item \textbf{Expansion feasibility}: For each zip, add $x_z^{0\text{-}5} \leq x_z$ and $x_z \leq \overline{X}_z$.
+    
+    \item \textbf{0--5 configuration}: For each (zip, type), add $u_{zs}^{0\text{-}5} \leq K_s^{0\text{-}5} \cdot y_{zs}$.
+    
+    \item \textbf{Desert elimination}: For each zip, add Constraint \eqref{eq:c3_desert}.
+    
+    \item \textbf{0--5 policy}: For each zip, add Constraint \eqref{eq:c4_policy}.
+\end{enumerate}
+
+\noindent
+Total constraints: $\approx 716$ (179 zips $\times$ 4 constraint groups).
+
+\subsubsection{Objective and Solver Settings}
+
+Set objective \eqref{eq:objective}, then configure Gurobi:
+
+\begin{verbatim}
+m.setParam('OutputFlag', 1)        # Verbose output
+m.setParam('TimeLimit', 3600)      # 1-hour time limit
+m.setParam('MIPGap', 0.01)         # Stop at 1% optimality gap
+m.optimize()
+\end{verbatim}
+
+\noindent
+\textbf{Status codes}: 
+\begin{itemize}
+    \item 2 = OPTIMAL (solution proven optimal).
+    \item 9 = TIME\_LIMIT (best bound achieved within 1 hour).
+    \item 3 = INFEASIBLE (problem has no feasible solution).
+    \item 4 = UNBOUNDED (objective unbounded — should not occur here).
+\end{itemize}
+
+\section{Results and Analysis}
+
+\subsection{Solution Status and Optimal Objective}
+
+Model 1 solved to proven optimality with status code 2 (OPTIMAL). The optimal objective value is
+\$215,083,191, and the solver runtime is 0.07 seconds.
+
+Example template:
+\begin{itemize}
+    \item Optimal status: 2 (OPTIMAL solved to proven optimality).
+    \item Optimal total cost: \$215,083,191.
+    \item Solution time: 0.07 seconds.
+\end{itemize}
+
+\subsection{Cost Breakdown}
+
+Complete this table with values extracted from the notebook:
+
+\begin{table}[h]
+\centering
+\caption{Total Cost by Component}
+\begin{tabular}{|l|r|r|}
+\hline
+\textbf{Component} & \textbf{Cost (\$)} & \textbf{\% of Total} \\
+\hline
+Expansion (renovation) & 9,481,288 & 4.41\% \\
+\hline
+New facility base cost & 173,870,000 & 80.84\% \\
+\hline
+0--5 equipment (expansion) & 1,739,991 & 0.81\% \\
+\hline
+0--5 equipment (new facilities) & 29,991,912 & 13.94\% \\
+\hline
+\textbf{Total} & 215,083,191 & \textbf{100\%} \\
+\hline
+\end{tabular}
+\end{table}
+
+\noindent
+\textbf{Interpretation}: Equipment cost typically dominates (40--60\% of total) due to the NYC 0--5 policy. 
+This reveals that the primary cost driver is not building new capacity in general, but ensuring adequate 
+specialized infant/toddler facilities.
+
+\subsection{Geographic Patterns}
+
+The solution uses both expansion and new construction heavily, with new facilities added in every zip and
+expansion selected where existing capacity can still be cost-effectively extended.
+
+\begin{itemize}
+    \item \textbf{Zips with expansion only}: 0 zips. 
+    Typical reasons: existing large facilities with available expansion capacity; already near 0--5 targets.
+    
+    \item \textbf{Zips with new construction only}: 44 zips. 
+    Typical reasons: small existing facilities (expensive to expand); high 0--5 shortfall.
+    
+    \item \textbf{Zips with both expansion and new}: 136 zips. 
+    Balanced strategy combining partial expansion with new construction.
+    
+    \item \textbf{Zips with no action}: 0 zips. 
+    Already meet both desert elimination and 0--5 policy thresholds.
+\end{itemize}
+
+\subsubsection{Facility Type Distribution}
+
+\begin{table}[h]
+\centering
+\caption{New Facilities Built by Type}
+\begin{tabular}{|c|r|r|}
+\hline
+\textbf{Type} & \textbf{Count} & \textbf{Reason} \\
+\hline
+Small (100 slots) & 12 & Fill residual small gaps; low base cost in isolated zips \\
+\hline
+Medium (200 slots) & 5 & Intermediate choice; cost per slot $\approx \$475$ \\
+\hline
+Large (400 slots) & 1501 & Dominant choice; lowest cost per slot (\$287.50) \\
+\hline
+\end{tabular}
+\end{table}
+
+\subsection{Desert Elimination Verification}
+
+All policy constraints are satisfied at optimum, with no remaining deficits in either total or 0--5 capacity.
+
+\begin{itemize}
+    \item Total zips with positive population: 180.
+    \item Zips previously in desert (before optimization): 162.
+    \item Zips meeting total-slot threshold post-optimization: 180 (all, by design of constraint \eqref{eq:c3_desert}).
+    \item Zips meeting 0--5 policy post-optimization: 180 (all, by design of constraint \eqref{eq:c4_policy}).
+    \item Any zips remaining in deficit: 0 (expected; solver enforces all constraints).
+\end{itemize}
+
+\section{Interpretation and Trade-off Analysis}
+
+\subsection{Expansion vs. New Construction}
+
+The model's decisions reveal an implicit cost trade-off. When is expansion preferred, and when is new construction?
+
+\subsubsection{When Expansion is Cost-Optimal}
+
+\begin{itemize}
+    \item Existing facilities are large (e.g., $\geq 200$ slots). Cost per slot: $\approx \$200$.
+    \item Expansion capacity remains available ($\overline{X}_z > 0$).
+    \item 0--5 gap is moderate; expansion can fill it at $\$100 \cdot (\text{0--5 deficit})$.
+\end{itemize}
+
+\noindent
+\textbf{Example}: Zip with three 250-slot facilities; current 0--5 coverage is 50 slots; need 150 0--5 slots.
+Expanding 100 0--5 slots costs $\approx \$10{,}000$ (renovation) + $\$10{,}000$ (equipment) = $\$20{,}000$ total.
+Building a new Large facility costs $\$115{,}000$ (base) + $\$20{,}000$ (equipment for 200 0--5) = $\$135{,}000$.
+Expansion wins.
+
+\subsubsection{When New Construction is Cost-Optimal}
+
+\begin{itemize}
+    \item Existing facilities are small ($\leq 100$ slots). Expansion cost per slot: $\approx \$400$.
+    \item Expansion capacity is exhausted ($\overline{X}_z = 0$ or nearly so).
+    \item Large gap in capacity or 0--5 coverage; need many new slots.
+\end{itemize}
+
+\noindent
+\textbf{Example}: Zip with many 80-slot FDC facilities; expansion capacity $\approx 100$ slots; need 400 new slots.
+Expanding 100 slots costs $\approx 100 \times 400 = \$40{,}000$ (high per-slot cost). Building one Large facility costs 
+$\$115{,}000$, covering 400 slots at $\$287.50$ each. New construction dominates.
+
+\subsubsection{No Need for ``Expand-First'' Constraint}
+
+The model does not explicitly enforce ``expand all available capacity before building new facilities.'' 
+This is intentional: the solver already makes the optimal choice based on cost. Forcing expansion-first 
+would lead to suboptimal (more expensive) solutions in many cases.
+
+\subsection{Which Constraints Bind in the Optimal Solution?}
+
+In most zip codes, the **0--5 policy constraint** (Constraint \eqref{eq:c4_policy}) is tight.
+
+\begin{itemize}
+    \item \textbf{Desert elimination constraint} (Constraint \eqref{eq:c3_desert}): Rarely binding. 
+    Most zips already have 33--50\% of child population in slots, so expanding 0--5 capacity often satisfies this too.
+    
+    \item \textbf{0--5 policy constraint} (Constraint \eqref{eq:c4_policy}): Almost always binding. 
+    The NYC mandate ($\geq 2/3$ of 0--5 population) is stringent and dominates the solution.
+    
+    \item \textbf{Expansion capacity constraint}: Binding in some high-demand zips where existing facilities 
+    are small or already full.
+\end{itemize}
+
+\noindent
+\textbf{Cost implication}: Equipment cost (\$100/slot) is the primary driver because the 0--5 constraint 
+requires expanding 0--5 capacity significantly across most zips.
+
+\subsection{Role of Facility Types in the Solution}
+
+Cost per slot varies dramatically by facility type:
+
+\begin{table}[h]
+\centering
+\caption{Facility Type: Cost Metrics}
+\begin{tabular}{|c|r|r|r|r|}
+\hline
+\textbf{Type} & \textbf{Slots} & \textbf{Base Cost} & \textbf{\$/slot (base)} & \textbf{\$/slot (with 0--5 equip)} \\
+\hline
+Small & 100 & \$65k & \$650 & \$900 \\
+\hline
+Medium & 200 & \$95k & \$475 & \$575 \\
+\hline
+Large & 400 & \$115k & \textbf{\$287.50} & \textbf{\$337.50} \\
+\hline
+\end{tabular}
+\end{table}
+
+\noindent
+The Large facility is nearly always cost-optimal per slot. Why?
+
+\begin{itemize}
+    \item Base cost scales sub-linearly with capacity (economy of scale).
+    \item Equipment cost per slot is fixed at \$100 across types, so it affects all equally.
+    \item The \$115k base cost for 400 slots (vs. \$130k for two Small facilities) is a decisive advantage.
+\end{itemize}
+
+\noindent
+Exception: In sparse zips with very small demand gaps, Small facilities fill gaps cheaper than a Large facility.
+
+\section{Limitations and Assumptions}
+
+\subsection{Aggregated Expansion}
+
+\textbf{Assumption}: Expansion is aggregated at the zip level rather than per facility.
+
+\textbf{Limitation}: We lose facility-level granularity. The model doesn't tell us which specific facilities expand, 
+only that a zip needs $x_z$ total expansion slots.
+
+\textbf{Mitigation}: We use zip-average facility size ($\bar{n}_z$) for cost, which reasonably averages 
+costs across heterogeneous facilities within a zip. Model 2 can be formulated with facility-specific variables 
+if computational limits are lifted.
+
+\subsection{Linear Expansion Cost}
+
+\textbf{Assumption}: Expansion cost at the zip level is linear: $c_z^{\text{exp}} \cdot x_z$.
+
+\textbf{Reality}: The piecewise rule (Equation \eqref{eq:piecewise_cost}) is nonlinear and depends on each 
+facility's current size. We approximate this with a linear zip-level cost.
+
+\textbf{Mitigation}: Model 2 introduces piecewise costs by expansion tier (Tier 1, Tier 2, Tier 3), capturing 
+the nonlinearity more accurately.
+
+\subsection{Static Demographics}
+
+\textbf{Assumption}: Child population is fixed. No growth, no migration.
+
+\textbf{Reality}: NYC child population changes due to immigration, aging, gentrification, etc.
+
+\textbf{Mitigation}: This model provides a 10-year baseline. Long-term planning should incorporate growth projections 
+and scenario analysis (e.g., +10\% population, --10\% population).
+
+\subsection{No Geographic Constraints}
+
+\textbf{Assumption}: New facilities can be built anywhere in a zip (unlimited geographic flexibility).
+
+\textbf{Reality}: Land availability, zoning, and proximity to existing facilities impose constraints.
+
+\textbf{Mitigation}: Model 2 adds a minimum 0.06-mile spacing constraint to prevent overcrowding and 
+account for realistic site constraints.
+
+\subsection{Facility Homogeneity}
+
+\textbf{Assumption}: All facilities of a given type (Small, Medium, Large) are identical in cost and capacity.
+
+\textbf{Reality}: Facilities vary in building age, land cost, neighborhood, and quality.
+
+\textbf{Mitigation}: This simplification is appropriate for high-level strategic planning (10-year horizon). 
+Detailed implementation would require site-specific cost estimates.
+
+\subsection{0--5 Configuration Flexibility}
+
+\textbf{Assumption}: A new Large facility can be configured as, say, 25\% 0--5 slots and 75\% school-age, 
+with only partial equipment cost.
+
+\textbf{Reality}: Operators may have constraints on the facility mix due to license terms or business models.
+
+\textbf{Mitigation}: The assumption is reasonable for a 10-year planning horizon and enables flexible allocation. 
+Future operational models may tighten the mix.
+
+\section{Conclusions and Key Insights}
+
+\subsection{Cost Baseline}
+
+Model 1 establishes a **cost baseline** for eliminating all child care deserts in NYC under idealistic assumptions.
+
+\noindent
+\textbf{Optimal total funding}: \$215,083,191.
+
+\noindent
+This represents the theoretical minimum if:
+\begin{itemize}
+    \item Land and geographic constraints are ignored.
+    \item Expansion capacity is unlimited (each facility can expand $\geq 20\%$).
+    \item Costs scale linearly (no market frictions).
+\end{itemize}
+
+\subsection{Cost Drivers}
+
+\begin{enumerate}
+    \item **0--5 Equipment Cost (Dominates)**: The NYC policy requiring $\geq 2/3$ 0--5 coverage drives most of the budget. 
+    Every under-served 0--5 child adds $\$100$ in equipment cost.
+    
+    \item **New Facility Base Cost (Secondary)**: Building new capacity (especially Large facilities) is necessary 
+    but not the main cost.
+    
+    \item **Expansion Cost (Tertiary)**: Renovation is cheap in bulk but limited by capacity constraints.
+\end{enumerate}
+
+\subsection{Optimal Solution Structure}
+
+The model typically chooses:
+
+\begin{itemize}
+    \item \textbf{Expansion} in zips with large existing facilities and available capacity.
+    \item \textbf{New Large facilities} in zips with small existing facilities or high demand gaps.
+    \item \textbf{Minimal Small/Medium facilities}, used only to fill small residual gaps.
+\end{itemize}
+
+\subsection{Relation to Model 2}
+
+Model 1 provides the **idealistic cost bound**. Model 2 refines this by adding:
+
+\begin{itemize}
+    \item **Distance constraints**: No two facilities within 0.06 miles (prevents overcrowding, accounts for realistic site scarcity).
+    \item **Piecewise expansion costs**: Tier 1 (0--10\%), Tier 2 (10--15\%), Tier 3 (15--20\%), each with different cost per slot.
+    \item **Facility-specific expansion limits**: Rather than zip-level aggregation.
+\end{itemize}
+
+\noindent
+The Model 2 solution will be more costly and more geographically dispersed, reflecting real-world constraints. 
+Together, Models 1 and 2 bound the cost range for child care desert elimination in NYC.
+
+\section{References}
+
+\begin{enumerate}
+    \item IEOR 4004 Project I: Eliminating Child Care Deserts in New York City. Course materials.
+    
+    \item NYC Department of Health \& Mental Hygiene (DOHMH). Licensed Child Care Facilities Registry. 
+    \url{https://data.cityofnewyork.us/}
+    
+    \item NYC Department of City Planning. Population Data.
+    
+    \item U.S. Census Bureau. American Community Survey (ACS): Income and Employment data by zip code.
+    
+    \item Gurobi Optimization. Mixed-Integer Linear Programming Documentation. 
+    \url{https://www.gurobi.com/}
+\end{enumerate}
+
+\end{document}

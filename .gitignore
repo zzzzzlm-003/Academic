@@ -1,0 +1,33 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Conda / Python virtual envs
+.conda/
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.ipynb_checkpoints/
+
+# Jupyter
+.jupyter/
+
+# Logs / temp
+*.log
+*.tmp
+
+# OS / build
+Thumbs.db
+ehthumbs.db

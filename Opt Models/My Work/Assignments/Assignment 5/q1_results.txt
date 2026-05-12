@@ -1,0 +1,61 @@
+=== Q1.2 Reverse Markowitz ===
+sigma_max (vol) = 0.2000
+Achieved annual return = 0.7480
+Realized portfolio variance = 0.040000  (std = 0.2000)
+Number of non-trivial holdings (w>1e-4): 15
+Top 10 holdings:
+  CBOE    0.3377
+  MCK     0.0965
+  STX     0.0831
+  CASY    0.0782
+  VRT     0.0745
+  CVNA    0.0668
+  PLTR    0.0566
+  APP     0.0563
+  SATS    0.0443
+  WDC     0.0352
+
+=== Q1.3 Efficient Frontier ===
+Min-variance portfolio vol = 0.0827
+  realized vol=0.0846  ->  max return=0.2685
+  realized vol=0.1203  ->  max return=0.4932
+  realized vol=0.1562  ->  max return=0.6197
+  realized vol=0.1921  ->  max return=0.7263
+  realized vol=0.2281  ->  max return=0.8218
+  realized vol=0.2640  ->  max return=0.9098
+  realized vol=0.3000  ->  max return=0.9934
+  realized vol=0.3359  ->  max return=1.0740
+  realized vol=0.3719  ->  max return=1.1519
+  realized vol=0.4078  ->  max return=1.2280
+  realized vol=0.4438  ->  max return=1.3028
+  realized vol=0.4797  ->  max return=1.3708
+  realized vol=0.5157  ->  max return=1.4274
+  realized vol=0.5516  ->  max return=1.4771
+  realized vol=0.5875  ->  max return=1.5215
+  realized vol=0.6235  ->  max return=1.5614
+  realized vol=0.6594  ->  max return=1.5975
+  realized vol=0.6954  ->  max return=1.6306
+  realized vol=0.7313  ->  max return=1.6618
+  realized vol=0.7673  ->  max return=1.6912
+  realized vol=0.8032  ->  max return=1.7176
+  realized vol=0.8392  ->  max return=1.7411
+  realized vol=0.8751  ->  max return=1.7627
+  realized vol=0.9111  ->  max return=1.7829
+  realized vol=0.9470  ->  max return=1.8022
+
+=== Q1.4 Capped Portfolio (max weight 5%) ===
+sigma_max (vol) = 0.2000
+Achieved return = 0.7309 (uncapped: 0.7480)
+Realized variance = 0.040000 (uncapped: 0.040000)
+Non-trivial holdings: 20 (uncapped: 15)
+Top 10 capped holdings:
+  CBOE    0.1000
+  MCK     0.1000
+  CASY    0.0917
+  STX     0.0850
+  VRT     0.0677
+  CVNA    0.0642
+  APP     0.0594
+  PLTR    0.0524
+  CME     0.0509
+  T       0.0461
